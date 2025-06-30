@@ -7,15 +7,17 @@ Original file is located at
     https://colab.research.google.com/github/ItaloNardy/NetworkAnalysis_Pyvis-Streamlit/blob/main/pyvis_sample.ipynb
 """
 
-!pip install pyvis
-!pip install wikipedia
+import subprocess
+import sys
+
+# Automatically install pyvis if not already installed
+subprocess.check_call([sys.executable, "-m", "pip", "install", "pyvis"])
 
 
 from operator import itemgetter
 from pyvis import network as net
 import pandas as pd
 import networkx as nx
-import wikipedia
 import matplotlib.pyplot as plt
 import seaborn as sns
 
