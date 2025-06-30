@@ -53,8 +53,8 @@ for node in got_net.nodes:
                 node["title"] += " Neighbors:<br>" + "<br>".join(neighbor_map[node["id"]])
                 node["value"] = len(neighbor_map[node["id"]])
 
-g.repulsion()
-g.show_buttons(filter_=['physics'])
+got_net.repulsion()
+got_net.show_buttons(filter_=['physics'])
 got_net.show("gameofthrones.html")
 display(HTML('gameofthrones.html'))
 
