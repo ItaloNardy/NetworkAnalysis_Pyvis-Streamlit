@@ -4,3 +4,4 @@ networkx
 wikipedia
 matplotlib
 seaborn
+IPython
