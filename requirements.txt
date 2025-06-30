@@ -2,5 +2,5 @@ pyvis
 pandas
 networkx
 wikipedia
-matplotlib.pyplot
+matplotlib
 seaborn
