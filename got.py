@@ -29,7 +29,7 @@ got_net=net.Network(height='800px', width='100%',heading='', notebook=True, cdn_
 
 # set the physics layout of the network
 got_net.barnes_hut()
-got_data = pd.read_csv("../content/got-edges.csv")
+got_data = pd.read_csv("got-edges.csv")
 
 sources = got_data['Source']
 targets = got_data['Target']
