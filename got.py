@@ -16,6 +16,7 @@ subprocess.check_call([sys.executable, "-m", "pip", "install", "pyvis"])
 
 from operator import itemgetter
 from pyvis import network as net
+from IPython.core.display import display, HTML
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
