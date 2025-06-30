@@ -1,5 +1,4 @@
 pyvis
-operator
 pandas
 networkx
 wikipedia
