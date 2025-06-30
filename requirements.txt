@@ -1,1 +1,7 @@
 pyvis
+operator
+pandas
+networkx
+wikipedia
+matplotlib.pyplot
+seaborn
