@@ -8,7 +8,7 @@ import streamlit.components.v1 as components
 import os
 
 # Load the CSV
-got_data = pd.read_csv("got-edges.csv")
+csv_path = os.path.join(os.path.dirname(__file__), "got-edges.csv")
 got_data = pd.read_csv(csv_path)
 
 # Create pyvis network
