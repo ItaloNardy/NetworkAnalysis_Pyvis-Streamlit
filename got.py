@@ -32,7 +32,7 @@ got_net.repulsion()
 got_net.show_buttons(filter_=['physics'])
 
 # Export to HTML
-got_net.show("gameofthrones.html")
+got_net.write_html("gameofthrones.html")
 
 # Display in Streamlit
 with open("gameofthrones.html", "r", encoding="utf-8") as f:
