@@ -1,82 +1,114 @@
-# got.py
-
-from pyvis import network as net
+import os
 import pandas as pd
 import networkx as nx
+import matplotlib.pyplot as plt
+import seaborn as sns
 import streamlit as st
 import streamlit.components.v1 as components
-import os
+from pyvis.network import Network
 
-# Load the CSV
+# Load CSV data
 csv_path = os.path.join(os.path.dirname(__file__), "got-edges.csv")
-got_data = pd.read_csv(csv_path)
+data = pd.read_csv(csv_path)
 
-# Build a directed graph (DiGraph)
+# Build full directed graph
 G = nx.DiGraph()
-for src, dst, w in zip(got_data['Source'], got_data['Target'], got_data['Weight']):
-    G.add_edge(src, dst, weight=w)
+for src, dst, weight in zip(data['Source'], data['Target'], data['Weight']):
+    G.add_edge(src, dst, weight=weight)
 
-# Create pyvis network
-got_net = net.Network(height='800px', width='100%', heading='', notebook=False, cdn_resources='remote', directed=True)
+# Sidebar options
+st.sidebar.title("Graph Subset Selection")
+subset_option = st.sidebar.selectbox("Choose a subset of the graph:", [
+    "Entire Graph",
+    "Largest Strongly Connected Component",
+    "Top 20 Nodes by Degree"
+])
+
+if subset_option == "Entire Graph":
+    G_sub = G
+elif subset_option == "Largest Strongly Connected Component":
+    largest_scc = max(nx.strongly_connected_components(G), key=len)
+    G_sub = G.subgraph(largest_scc).copy()
+elif subset_option == "Top 20 Nodes by Degree":
+    top_nodes = sorted(G.degree, key=lambda x: x[1], reverse=True)[:20]
+    top_node_ids = [n for n, _ in top_nodes]
+    G_sub = G.subgraph(top_node_ids).copy()
+
+# Pyvis visualization
+got_net = Network(height='800px', width='100%', directed=True, notebook=False)
 got_net.barnes_hut()
 
-# Add nodes and edges
-for src, dst, w in G.edges(data='weight'):
-    got_net.add_node(src, src, title=src)
-    got_net.add_node(dst, dst, title=dst)
-    got_net.add_edge(src, dst, value=w)
+for src, dst, data in G_sub.edges(data=True):
+    got_net.add_node(src, title=src)
+    got_net.add_node(dst, title=dst)
+    got_net.add_edge(src, dst, value=data.get('weight', 1))
 
-# Add neighbor info
 neighbor_map = got_net.get_adj_list()
 for node in got_net.nodes:
     node["title"] += " Neighbors:<br>" + "<br>".join(neighbor_map[node["id"]])
     node["value"] = len(neighbor_map[node["id"]])
 
-# Optional controls
 got_net.repulsion()
 got_net.show_buttons(filter_=['physics'])
+got_net.write_html("got_network.html")
 
-# Export to HTML
-got_net.write_html("gameofthrones.html")
+# Display network
+st.title("Game of Thrones Network Analysis")
+st.subheader("1. Network Visualization")
+components.html(open("got_network.html", "r", encoding="utf-8").read(), height=800, scrolling=True)
 
-# Display in Streamlit
-st.title("Game of Thrones Network")
-components.html(open("gameofthrones.html", "r", encoding="utf-8").read(), height=800, scrolling=True)
-
-# -------------------------
-# Metrics and explanations
-# -------------------------
-st.header("Network Metrics and Their Meanings")
-
-# Density
+# 2. Structural Metrics
+st.subheader("2. Structural Metrics")
 density = nx.density(G)
-st.subheader("Network Sparsity / Density")
-st.write(f"**Density:** {density:.4f}")
-st.markdown("Density is the ratio of actual edges to the total possible edges. It tells how 'full' the network is.")
+st.markdown(f"**Network Density:** {density:.4f} — Ratio of actual edges to possible edges.")
 
-# Assortativity
 assortativity = nx.degree_assortativity_coefficient(G)
-st.subheader("Network Assortativity")
-st.write(f"**Assortativity Coefficient:** {assortativity:.4f}")
-st.markdown("Assortativity measures how nodes tend to connect to others with similar degree. Positive values indicate similar-degree nodes connect more often.")
+st.markdown(f"**Assortativity:** {assortativity:.4f} — Indicates if nodes tend to connect to others with similar degree.")
 
-# Global clustering coefficient
-try:
-    clustering = nx.average_clustering(G.to_undirected())
-    st.subheader("Global Clustering Coefficient")
-    st.write(f"**Average Clustering Coefficient:** {clustering:.4f}")
-    st.markdown("This measures the tendency of a node's neighbors to be connected with each other — forming 'triangles' or tight-knit groups.")
-except:
-    st.warning("Could not compute clustering coefficient.")
+clustering = nx.average_clustering(G.to_undirected())
+st.markdown(f"**Global Clustering Coefficient:** {clustering:.4f} — Measures the tendency of nodes to cluster together.")
 
-# Strongly connected components
-strongly_connected = list(nx.strongly_connected_components(G))
-st.subheader("Strongly Connected Components")
-st.write(f"**Number of Strongly Connected Components:** {len(strongly_connected)}")
-st.markdown("In a directed graph, a strongly connected component is a set of nodes where each node is reachable from any other node in the same set.")
+scc = list(nx.strongly_connected_components(G))
+st.markdown(f"**Strongly Connected Components:** {len(scc)} — Groups where every node is reachable from any other. Applies to directed graphs.")
 
-# Weakly connected components
-weakly_connected = list(nx.weakly_connected_components(G))
-st.subheader("Weakly Connected Components")
-st.write(f"**Number of Weakly Connected Components:** {len(weakly_connected)}")
-st.markdown("A weakly connected component is a set of nodes that would be connected if all edge directions were ignored.")
+wcc = list(nx.weakly_connected_components(G))
+st.markdown(f"**Weakly Connected Components:** {len(wcc)} — Groups where nodes are connected if direction is ignored.")
+
+# 3. Degree Distributions
+st.subheader("3. Degree Distributions")
+degrees = [deg for _, deg in G.degree()]
+in_degrees = [deg for _, deg in G.in_degree()]
+out_degrees = [deg for _, deg in G.out_degree()]
+
+fig, ax = plt.subplots(1, 3, figsize=(18, 5))
+sns.histplot(degrees, bins=20, ax=ax[0], kde=False, color='blue')
+ax[0].set_title("Total Degree Distribution")
+
+sns.histplot(in_degrees, bins=20, ax=ax[1], kde=False, color='green')
+ax[1].set_title("In-Degree Distribution")
+
+sns.histplot(out_degrees, bins=20, ax=ax[2], kde=False, color='red')
+ax[2].set_title("Out-Degree Distribution")
+
+st.pyplot(fig)
+
+# 4. Node Centrality
+st.subheader("4. Node Centrality Measures")
+top_k = st.slider("Select top-k nodes to display:", min_value=5, max_value=30, value=10)
+
+centralities = {
+    "Eigenvector Centrality": nx.eigenvector_centrality_numpy(G),
+    "Degree Centrality": nx.degree_centrality(G),
+    "Closeness Centrality": nx.closeness_centrality(G),
+    "Betweenness Centrality": nx.betweenness_centrality(G)
+}
+
+for name, values in centralities.items():
+    st.markdown(f"### {name}")
+    top_nodes = sorted(values.items(), key=lambda x: x[1], reverse=True)[:top_k]
+    df = pd.DataFrame(top_nodes, columns=["Node", "Centrality"])
+    st.dataframe(df)
+    fig, ax = plt.subplots(figsize=(10, 4))
+    sns.barplot(x="Centrality", y="Node", data=df, palette="viridis", ax=ax)
+    ax.set_title(f"Top {top_k} Nodes by {name}")
+    st.pyplot(fig)
