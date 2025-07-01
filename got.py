@@ -99,7 +99,17 @@ top_k = st.slider("Select top-k nodes to display:", min_value=5, max_value=30, v
 # Compute eigenvector centrality only on largest SCC
 largest_scc = max(nx.strongly_connected_components(G), key=len)
 G_scc = G.subgraph(largest_scc).copy()
-eigen_centrality = nx.eigenvector_centrality_numpy(G_scc)
+
+if len(G_scc) > 2:
+    try:
+        eigen_centrality = nx.eigenvector_centrality_numpy(G_scc)
+    except Exception:
+        # fallback to power iteration
+        eigen_centrality = nx.eigenvector_centrality(G_scc, max_iter=1000)
+else:
+    eigen_centrality = {}
+    st.warning("Largest strongly connected component too small to compute eigenvector centrality.")
+
 
 st.markdown("**Note:** Eigenvector centrality is computed only on the largest strongly connected component.")
 
