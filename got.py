@@ -39,4 +39,4 @@ with open("gameofthrones.html", "r", encoding="utf-8") as f:
     html_string = f.read()
 
 st.title("Game of Thrones Network")
-components.html(html_string, height=800, scrolling=True)
+components.html(html_string, height=1080, width=1920, scrolling=True)
