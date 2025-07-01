@@ -16,7 +16,7 @@ G = nx.DiGraph()
 for src, dst, weight in zip(data['Source'], data['Target'], data['Weight']):
     G.add_edge(src, dst, weight=weight)
 
-# Sidebar options
+# Sidebar: choose graph subset
 st.sidebar.title("Graph Subset Selection")
 subset_option = st.sidebar.selectbox("Choose a subset of the graph:", [
     "Entire Graph",
@@ -38,10 +38,10 @@ elif subset_option == "Top 20 Nodes by Degree":
 got_net = Network(height='800px', width='100%', directed=True, notebook=False)
 got_net.barnes_hut()
 
-for src, dst, data in G_sub.edges(data=True):
+for src, dst, data_edge in G_sub.edges(data=True):
     got_net.add_node(src, title=src)
     got_net.add_node(dst, title=dst)
-    got_net.add_edge(src, dst, value=data.get('weight', 1))
+    got_net.add_edge(src, dst, value=data_edge.get('weight', 1))
 
 neighbor_map = got_net.get_adj_list()
 for node in got_net.nodes:
@@ -92,12 +92,19 @@ ax[2].set_title("Out-Degree Distribution")
 
 st.pyplot(fig)
 
-# 4. Node Centrality
+# 4. Node Centrality Measures
 st.subheader("4. Node Centrality Measures")
 top_k = st.slider("Select top-k nodes to display:", min_value=5, max_value=30, value=10)
 
+# Compute eigenvector centrality only on largest SCC
+largest_scc = max(nx.strongly_connected_components(G), key=len)
+G_scc = G.subgraph(largest_scc).copy()
+eigen_centrality = nx.eigenvector_centrality_numpy(G_scc)
+
+st.markdown("**Note:** Eigenvector centrality is computed only on the largest strongly connected component.")
+
 centralities = {
-    "Eigenvector Centrality": nx.eigenvector_centrality_numpy(G),
+    "Eigenvector Centrality": eigen_centrality,
     "Degree Centrality": nx.degree_centrality(G),
     "Closeness Centrality": nx.closeness_centrality(G),
     "Betweenness Centrality": nx.betweenness_centrality(G)
