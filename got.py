@@ -12,7 +12,7 @@ csv_path = os.path.join(os.path.dirname(__file__), "got-edges.csv")
 got_data = pd.read_csv(csv_path)
 
 # Create pyvis network
-got_net = net.Network(height='1920px', width='1080px', heading='', notebook=False, cdn_resources='remote')
+got_net = net.Network(height='800px', width='100%', heading='', notebook=False, cdn_resources='remote')
 got_net.barnes_hut()
 
 # Add edges
