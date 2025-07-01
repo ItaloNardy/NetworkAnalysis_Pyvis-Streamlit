@@ -35,7 +35,7 @@ elif subset_option == "Top 20 Nodes by Degree":
     G_sub = G.subgraph(top_node_ids).copy()
 
 # Pyvis visualization
-got_net = Network(height='800px', width='100%', directed=True, notebook=False)
+got_net = Network(height='1000px', width='100%', directed=True, notebook=False)
 got_net.barnes_hut()
 
 for src, dst, data_edge in G_sub.edges(data=True):
@@ -55,7 +55,10 @@ got_net.write_html("got_network.html")
 # Display network
 st.title("Game of Thrones Network Analysis")
 st.subheader("1. Network Visualization")
-components.html(open("got_network.html", "r", encoding="utf-8").read(), height=800, scrolling=True)
+
+# Set large height in components.html to fill large screens
+html_content = open("got_network.html", "r", encoding="utf-8").read()
+components.html(html_content, height=1000, scrolling=True)
 
 # 2. Structural Metrics
 st.subheader("2. Structural Metrics")
@@ -104,14 +107,10 @@ if len(G_scc) > 2:
     try:
         eigen_centrality = nx.eigenvector_centrality_numpy(G_scc)
     except Exception:
-        # fallback to power iteration
         eigen_centrality = nx.eigenvector_centrality(G_scc, max_iter=1000)
 else:
     eigen_centrality = {}
     st.warning("Largest strongly connected component too small to compute eigenvector centrality.")
-
-
-st.markdown("**Note:** Eigenvector centrality is computed only on the largest strongly connected component.")
 
 centralities = {
     "Eigenvector Centrality": eigen_centrality,
@@ -122,10 +121,13 @@ centralities = {
 
 for name, values in centralities.items():
     st.markdown(f"### {name}")
-    top_nodes = sorted(values.items(), key=lambda x: x[1], reverse=True)[:top_k]
-    df = pd.DataFrame(top_nodes, columns=["Node", "Centrality"])
-    st.dataframe(df)
-    fig, ax = plt.subplots(figsize=(10, 4))
-    sns.barplot(x="Centrality", y="Node", data=df, palette="viridis", ax=ax)
-    ax.set_title(f"Top {top_k} Nodes by {name}")
-    st.pyplot(fig)
+    if values:
+        top_nodes = sorted(values.items(), key=lambda x: x[1], reverse=True)[:top_k]
+        df = pd.DataFrame(top_nodes, columns=["Node", "Centrality"])
+        st.dataframe(df)
+        fig, ax = plt.subplots(figsize=(10, 4))
+        sns.barplot(x="Centrality", y="Node", data=df, palette="viridis", ax=ax)
+        ax.set_title(f"Top {top_k} Nodes by {name}")
+        st.pyplot(fig)
+    else:
+        st.write("No data available.")
